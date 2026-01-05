@@ -1,0 +1,13 @@
+{
+  "host": "smtp.exmail.qq.com",
+  "port": "465",
+  "username": "zhuyuelong@yangoo.cn",
+  "password": "ZNkLM6SYZbxfgxRa",
+  "sender": "zhuyuelong@yangoo.cn",
+  "to": "zhuyuelong@yangoo.cn",
+  "schedule_enabled": false,
+  "schedule_weekday": 1,
+  "schedule_time": "09:00",
+  "starttls": false,
+  "ssl": true
+}

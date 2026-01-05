@@ -1,0 +1,228 @@
+  {% extends "base.html" %}
+  {% block content %}
+	  <h1>周计划 - {{ plan.owner.name }} - {{ period.year }}年{{ period.month }}月第{{ week_in_month_period(period.start_date) }}周</h1>
+	  <div class="muted">ISO周：{{ period.start_date }} ~ {{ period.end_date }}（W{{ period.week_no }}）</div>
+		  <div class="muted">
+		    工作日：
+		    {% if workday_count and workday_count > 0 %}
+		      {{ workday_start }} ~ {{ workday_end }}（{{ workday_count }} 天）
+		    {% else %}
+		      -
+		    {% endif %}
+		    | 更新时间：{{ plan.updated_at.strftime("%Y-%m-%d %H:%M") if plan.updated_at else "-" }} | 工时合计：{{ "%.1f"|format(total_hours) }}h
+		  </div>
+	  <div class="actions">
+	    <a class="btn" href="/plans/{{ plan.id }}/export.xlsx">导出Excel</a>
+	    {% if plan.status == "draft" %}
+	      <form class="inline" method="post" action="/plans/{{ plan.id }}/submit{% if embed %}?embed=1{% endif %}">
+	        <button class="btn primary" type="submit">提交</button>
+      </form>
+    {% endif %}
+    <button class="btn" type="button" data-open-add-item>新增条目</button>
+    <form class="inline" method="post" action="/plans/{{ plan.id }}/copy-prev{% if embed %}?embed=1{% endif %}">
+      <button class="btn" type="submit">复制上周计划</button>
+    </form>
+  </div>
+
+  <datalist id="categories-source">
+    {% for c in categories %}
+      <option data-id="{{ c.id }}" value="{{ c.name }}"></option>
+    {% endfor %}
+  </datalist>
+  <datalist id="subprojects-source">
+    {% for s in sub_projects %}
+      <option data-id="{{ s.id }}" data-cat="{{ s.category_id }}" value="{{ s.name }}"></option>
+    {% endfor %}
+  </datalist>
+
+	  <div class="card">
+	    <table class="table sticky plan-table">
+	      <thead>
+	        <tr>
+	          <th class="col-cat">所属大类</th>
+	          <th class="col-sub">子项目</th>
+	          <th class="col-goal">本周目标</th>
+	          <th class="col-progress">进度</th>
+	          <th class="col-detail">目标细节</th>
+	          <th class="col-estimated">预计工时(h)</th>
+	          <th class="col-total">工时合计(h)</th>
+	          <th class="col-actions">操作</th>
+	        </tr>
+	      </thead>
+	      <tbody>
+	        {% for item in plan.items|sort(attribute="sort_no") %}
+	          {% set cat_obj = (categories|selectattr("id", "equalto", item.category_id)|list|first) %}
+	          {% set cat_name = cat_obj.name if cat_obj else "" %}
+	          {% set sub_obj = (sub_projects|selectattr("id", "equalto", item.sub_project_id)|list|first) %}
+	          {% set sub_name = sub_obj.name if sub_obj else "" %}
+	          {% if item.progress_percent is not none %}
+	            {% set progress_display = item.progress_percent ~ "%" %}
+	          {% else %}
+	            {% set progress_display = item.progress_text if item.progress_text else "/" %}
+	          {% endif %}
+	          {% set estimated_display = "%.1f"|format(item.estimated_hours) if item.estimated_hours is not none else "" %}
+	          {% set total_display = "%.1f"|format(item_hours.get(item.id, 0)) %}
+	          <tr data-item-row="{{ item.id }}">
+	            <td class="col-cat">
+	              <div class="cell-view">{{ cat_name }}</div>
+	              <div class="cell-edit">
+	                <div class="dict-field" data-dict-wrap>
+	                  <input
+	                    type="text"
+	                    id="cat_{{ item.id }}"
+	                    class="dict-input"
+	                    data-dict-input="category"
+	                    data-sub-input="sub_{{ item.id }}"
+	                    data-sub-list="sub_list_{{ item.id }}"
+	                    list="categories-source"
+	                    form="rowform_{{ item.id }}"
+	                    value="{{ cat_name }}"
+	                  />
+	                  <input type="hidden" form="rowform_{{ item.id }}" name="category_id" value="{{ item.category_id if item.category_id else '' }}" />
+	                </div>
+	              </div>
+	            </td>
+	            <td class="col-sub">
+	              <div class="cell-view">{{ sub_name }}</div>
+	              <div class="cell-edit">
+	                <div class="dict-field" data-dict-wrap>
+	                  <input
+	                    type="text"
+	                    id="sub_{{ item.id }}"
+	                    class="dict-input"
+	                    data-dict-input="subproject"
+	                    data-cat-input="cat_{{ item.id }}"
+	                    data-sub-list="sub_list_{{ item.id }}"
+	                    list="sub_list_{{ item.id }}"
+	                    form="rowform_{{ item.id }}"
+	                    value="{{ sub_name }}"
+	                  />
+	                  <input type="hidden" form="rowform_{{ item.id }}" name="sub_project_id" value="{{ item.sub_project_id if item.sub_project_id else '' }}" />
+	                  <datalist id="sub_list_{{ item.id }}"></datalist>
+	                </div>
+	              </div>
+	            </td>
+	            <td class="col-goal">
+	              <div class="cell-view cell-pre">{{ item.weekly_goal }}</div>
+	              <div class="cell-edit">
+	                <input form="rowform_{{ item.id }}" name="weekly_goal" value="{{ item.weekly_goal }}" />
+	              </div>
+	            </td>
+	            <td class="col-progress">
+	              <div class="cell-view">{{ progress_display }}</div>
+	              <div class="cell-edit">
+	                <div class="progress-box">
+	                  <select form="rowform_{{ item.id }}" name="progress_mode" class="progress-mode" data-target="p_{{ item.id }}">
+	                    <option value="text" {% if item.progress_percent is none %}selected{% endif %}>自由</option>
+	                    <option value="percent" {% if item.progress_percent is not none %}selected{% endif %}>%</option>
+	                  </select>
+	                  <input
+	                    form="rowform_{{ item.id }}"
+	                    id="p_{{ item.id }}"
+	                    name="{% if item.progress_percent is not none %}progress_percent{% else %}progress_text{% endif %}"
+	                    value="{% if item.progress_percent is not none %}{{ item.progress_percent }}{% else %}{{ item.progress_text if item.progress_text else '/' }}{% endif %}"
+	                  />
+	                </div>
+	              </div>
+	            </td>
+	            <td class="col-detail">
+	              <div class="cell-view cell-pre">{{ item.detail_text if item.detail_text else '' }}</div>
+	              <div class="cell-edit">
+	                <textarea form="rowform_{{ item.id }}" name="detail_text" rows="2">{{ item.detail_text if item.detail_text else '' }}</textarea>
+	              </div>
+	            </td>
+	            <td class="col-estimated">
+	              <div class="cell-view cell-num">{{ estimated_display }}</div>
+	              <div class="cell-edit">
+	                <input
+	                  form="rowform_{{ item.id }}"
+	                  name="estimated_hours"
+	                  type="number"
+	                  step="0.1"
+	                  value="{{ item.estimated_hours if item.estimated_hours is not none else '' }}"
+	                />
+	              </div>
+	            </td>
+	            <td class="actions-col col-total">{{ total_display }}</td>
+	            <td class="actions-col col-actions">
+	              <div class="row-actions">
+	                <form
+	                  id="rowform_{{ item.id }}"
+	                  method="post"
+	                  action="/items/{{ item.id }}/update{% if embed %}?embed=1{% endif %}"
+	                  class="rowform inline"
+	                >
+	                  <input type="hidden" name="plan_id" value="{{ plan.id }}" />
+	                  <button class="btn small primary" type="button" data-toggle-edit>修改</button>
+	                </form>
+	                <form method="post" action="/items/{{ item.id }}/delete{% if embed %}?embed=1{% endif %}" class="inline">
+	                  <input type="hidden" name="plan_id" value="{{ plan.id }}" />
+	                  <button class="btn small danger" type="submit">删除</button>
+	                </form>
+	              </div>
+	            </td>
+	          </tr>
+
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <dialog id="addItemDialog" class="dialog">
+    <form method="post" action="/plans/{{ plan.id }}/items{% if embed %}?embed=1{% endif %}" class="dialog-inner">
+      <div class="dialog-header">
+        <div class="muted">新增周计划条目</div>
+        <div class="dialog-actions">
+          <button class="btn" type="button" data-close-add-item>关闭</button>
+        </div>
+      </div>
+      <div class="grid">
+        <label>所属大类</label>
+        <div class="dict-field" data-dict-wrap>
+          <input
+            type="text"
+            id="new_category"
+            class="dict-input"
+            data-dict-input="category"
+            data-sub-input="new_sub"
+            data-sub-list="sub_list_new"
+            list="categories-source"
+          />
+          <input type="hidden" name="category_id" />
+        </div>
+        <label>子项目</label>
+        <div class="dict-field" data-dict-wrap>
+          <input
+            type="text"
+            id="new_sub"
+            class="dict-input"
+            data-dict-input="subproject"
+            data-cat-input="new_category"
+            data-sub-list="sub_list_new"
+            list="sub_list_new"
+          />
+          <input type="hidden" name="sub_project_id" />
+          <datalist id="sub_list_new"></datalist>
+        </div>
+        <label>本周目标</label>
+        <input name="weekly_goal" />
+        <label>进度</label>
+        <div class="progress-box">
+          <select name="progress_mode" class="progress-mode" data-target="new_p">
+            <option value="text" selected>自由</option>
+            <option value="percent">%</option>
+          </select>
+          <input id="new_p" name="progress_text" value="/" />
+        </div>
+        <label>目标细节</label>
+        <textarea name="detail_text" rows="2" placeholder="可直接写长文本"></textarea>
+        <label>预计工时(h)</label>
+        <input name="estimated_hours" type="number" step="0.1" />
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="submit">保存</button>
+        <button class="btn" type="button" data-close-add-item>取消</button>
+      </div>
+    </form>
+  </dialog>
+{% endblock %}

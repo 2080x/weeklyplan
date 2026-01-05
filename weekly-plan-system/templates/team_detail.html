@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="actions">
+    <a class="btn" href="/team?d={{ selected_date_str }}">返回部门视图</a>
+  </div>
+
+  <h1>部门周计划 - {{ team.name }}</h1>
+  <div class="muted">ISO周：{{ period.start_date }} ~ {{ period.end_date }}（W{{ period.week_no }}）</div>
+  <div class="muted">
+    工作日：
+    {% if workday_count and workday_count > 0 %}
+      {{ workday_start }} ~ {{ workday_end }}（{{ workday_count }} 天）
+    {% else %}
+      -
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>人员</th>
+          <th>状态</th>
+          <th>更新时间</th>
+          <th>预计工时(h)</th>
+          <th>实际工时(h)</th>
+          <th>事项</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in members %}
+          {% set plan = plans_by_user.get(m.id) %}
+          {% set summary = plan_summaries.get(plan.id) if plan else none %}
+          {% set item_cnt = summary.get("items", 0) if summary else 0 %}
+          <tr>
+            <td>{{ m.name }}（{{ m.username }}）</td>
+            <td>
+              {% if item_cnt > 0 %}
+                <span class="status-badge status-ok">已登记</span>
+              {% else %}
+                <span class="status-badge status-bad">未登记</span>
+              {% endif %}
+            </td>
+            <td>{{ plan.updated_at.strftime("%Y-%m-%d %H:%M") if plan and plan.updated_at else "-" }}</td>
+            <td>{{ summary.get("estimated", "0.0") if summary else "0.0" }}</td>
+            <td>{{ summary.get("actual", "0.0") if summary else "0.0" }}</td>
+            <td>{{ item_cnt }}</td>
+            <td>
+              {% if plan %}
+                <a
+                  class="btn small primary"
+                  href="/plans/{{ plan.id }}?embed=1"
+                  onclick="return openPlanDialog('/plans/{{ plan.id }}?embed=1')"
+                  data-open-plan-window
+                >查看</a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <dialog id="planDialog" class="dialog dialog-large">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <div class="muted" id="planDialogTitle">周计划</div>
+        <div class="dialog-actions">
+          <button class="btn" type="button" data-plan-refresh>窗口内刷新</button>
+          <button class="btn primary" type="button" data-plan-close>关闭</button>
+        </div>
+      </div>
+      <iframe id="planDialogFrame" class="plan-frame" src="" frameborder="0"></iframe>
+    </div>
+  </dialog>
+{% endblock %}
+

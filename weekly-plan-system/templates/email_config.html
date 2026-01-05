@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ page_title if page_title else "邮箱配置" }}</h1>
+  <div class="card email-config-card">
+    <form method="post" action="{{ action_url if action_url else '/email-config' }}" class="email-config-form">
+      <label>SMTP 主机</label>
+      <input name="host" value="{{ cfg.host if cfg and cfg.host else 'smtp.exmail.qq.com' }}" required />
+
+      <label>端口</label>
+      <input name="port" type="number" value="{{ cfg.port if cfg and cfg.port else '465' }}" />
+
+      <label>用户名</label>
+      <input name="username" value="{{ cfg.username if cfg and cfg.username else '' }}" />
+
+      <label>密码</label>
+      <input name="password" type="password" value="{{ cfg.password if cfg and cfg.password else '' }}" />
+
+      <label>发件人邮箱 (From)</label>
+      <input name="sender" value="{{ cfg.sender if cfg and cfg.sender else '' }}" required />
+
+      <label>收件人邮箱 (默认 To)</label>
+      <input name="to" value="{{ cfg.to if cfg and cfg.to else '' }}" required />
+      <div class="hint">多个收件人可用逗号/分号/换行分隔。</div>
+
+      <label>定时自动发送</label>
+      <select name="schedule_enabled">
+        <option value="0" {% if not cfg or not cfg.schedule_enabled %}selected{% endif %}>关闭</option>
+        <option value="1" {% if cfg and cfg.schedule_enabled %}selected{% endif %}>开启</option>
+      </select>
+
+      <label>自动发送日（每周一次）</label>
+      <select name="schedule_weekday">
+        {% set wd = (cfg.schedule_weekday if cfg and cfg.schedule_weekday else 1) %}
+        <option value="1" {% if wd == 1 %}selected{% endif %}>周一</option>
+        <option value="2" {% if wd == 2 %}selected{% endif %}>周二</option>
+        <option value="3" {% if wd == 3 %}selected{% endif %}>周三</option>
+        <option value="4" {% if wd == 4 %}selected{% endif %}>周四</option>
+        <option value="5" {% if wd == 5 %}selected{% endif %}>周五</option>
+        <option value="6" {% if wd == 6 %}selected{% endif %}>周六</option>
+        <option value="7" {% if wd == 7 %}selected{% endif %}>周日</option>
+      </select>
+
+      <label>自动发送时间</label>
+      <input name="schedule_time" type="time" value="{{ cfg.schedule_time if cfg and cfg.schedule_time else '09:00' }}" />
+
+      <label>启用 STARTTLS</label>
+      <select name="starttls">
+        <option value="0" {% if not cfg or not cfg.starttls %}selected{% endif %}>否</option>
+        <option value="1" {% if cfg and cfg.starttls %}selected{% endif %}>是</option>
+      </select>
+
+      <label>使用 SSL (465)</label>
+      <select name="ssl">
+        <option value="0" {% if cfg and cfg.ssl == False %}selected{% endif %}>否</option>
+        <option value="1" {% if not cfg or cfg.ssl %}selected{% endif %}>是</option>
+      </select>
+
+      <button class="btn primary" type="submit">保存</button>
+      <div class="hint">{{ hint_text if hint_text else ("提示：配置仅对当前账号生效，保存在 data/email_config_users/" ~ user.id ~ ".json。") }}</div>
+    </form>
+  </div>
+{% endblock %}

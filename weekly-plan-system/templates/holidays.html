@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>节假日设置（管理员）</h1>
+
+  <div class="card">
+    <div class="muted">用于“本月周计划”工作日范围计算：休息日会排除；补班日会计入（即使是周末）。</div>
+    {% if message %}
+      <div class="alert">{{ message }}</div>
+    {% endif %}
+    <form method="post" action="/admin/holidays" class="form">
+      <label>休息日（法定节假日/调休休息，ISO 日期，每行一个）</label>
+      <textarea name="holidays_text" rows="8" placeholder="例如：2026-01-01">{{ holidays_text }}</textarea>
+
+      <label>补班日（周末上班日，ISO 日期，每行一个）</label>
+      <textarea name="workdays_text" rows="6" placeholder="例如：2026-01-04">{{ workdays_text }}</textarea>
+
+      <div class="actions">
+        <button class="btn primary" type="submit">保存</button>
+      </div>
+    </form>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
+
+    <form method="post" action="/admin/holidays/sync" class="rowform">
+      <input name="year" type="number" value="{{ year }}" />
+      <button class="btn" type="submit">同步法定节假日（需联网）</button>
+    </form>
+    <div class="hint">同步会尝试从公开数据源拉取指定年份的“休息日/补班日”。如无法联网，请手动维护上面的日期列表。</div>
+  </div>
+{% endblock %}
+

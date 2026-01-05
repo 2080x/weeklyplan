@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title if title else "工作周计划登记系统" }}</title>
+    <link rel="stylesheet" href="/static/app.css?v=refresh12" />
+    <script defer src="/static/app.js?v=refresh12"></script>
+  </head>
+  <body>
+    {% if not embed %}
+      <header class="topbar">
+        <div class="brand"><a href="/my">周计划登记</a></div>
+        <div class="top-actions">
+          {% if user %}
+            <div class="muted">{{ user.name }}{% if user.team %}（{{ user.team.name }}）{% endif %}</div>
+            <form action="/logout" method="post" class="inline">
+              <button type="submit" class="linkbtn">退出</button>
+            </form>
+          {% endif %}
+        </div>
+      </header>
+      <div class="layout{% if hide_sidebar %} layout-no-sidebar{% endif %}">
+        {% if user and not hide_sidebar %}
+          <aside class="sidebar">
+	            <nav class="menu">
+	              <a class="menu-item" href="/my">我的周计划</a>
+	              <a class="menu-item" href="/email-config">邮箱配置</a>
+		              {% if user.role == "admin" %}
+		                <div class="menu-sep"></div>
+		                <div class="menu-title">管理</div>
+		                <a class="menu-item" href="/team">部门视图</a>
+		                <a class="menu-item" href="/admin/dicts">字典管理</a>
+		                <a class="menu-item" href="/admin/users">用户管理</a>
+		                <a class="menu-item" href="/admin/logs">操作日志</a>
+		                <a class="menu-item" href="/admin/holidays">节假日设置</a>
+		              {% endif %}
+	            </nav>
+          </aside>
+        {% endif %}
+        <main class="container{% if hide_sidebar %} container-wide{% endif %}">
+    {% else %}
+      <main class="container embed-container">
+    {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    {% if not embed %}
+      </div>
+    {% endif %}
+  </body>
+</html>

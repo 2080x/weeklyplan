@@ -1,0 +1,10 @@
+{
+  "host": "smtp.exmail.qq.com",
+  "port": "465",
+  "username": "zhuyuelong@yangoo.cn",
+  "password": "27gDbY9GF8Qy9BSf",
+  "sender": "zhuyuelong@yangoo.cn",
+  "to": "zhuyuelong@yangoo.cn",
+  "starttls": false,
+  "ssl": true
+}

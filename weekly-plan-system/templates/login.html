@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card narrow">
+    <h1>登录</h1>
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/login" class="form">
+      <label>用户名</label>
+      <input name="username" autocomplete="username" required />
+      <label>密码</label>
+      <input name="password" type="password" autocomplete="current-password" required />
+      <button type="submit" class="btn primary">登录</button>
+    </form>
+    <div class="hint">默认管理员：admin / admin123</div>
+  </div>
+{% endblock %}
+

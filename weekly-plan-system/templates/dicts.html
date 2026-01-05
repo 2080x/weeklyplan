@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>字典管理（所属大类 / 子项目）</h1>
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <h2>新增所属大类</h2>
+        <form method="post" action="/admin/dicts/category" class="form rowform">
+          <input name="name" placeholder="例如：安全网关" required />
+          <button class="btn primary" type="submit">新增</button>
+        </form>
+        <h3>已启用所属大类</h3>
+        <ul class="list">
+          {% for c in categories %}
+            <li>{{ c.name }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h2>新增子项目</h2>
+        <form method="post" action="/admin/dicts/subproject" class="form rowform">
+          <select name="category_id" required>
+            {% for c in categories %}
+              <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          <input name="name" placeholder="例如：通道费用跟进" required />
+          <button class="btn primary" type="submit">新增</button>
+        </form>
+        <h3>已启用子项目</h3>
+        <ul class="list">
+          {% for s in sub_projects %}
+            <li>{{ s.category.name if s.category else "" }} / {{ s.name }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

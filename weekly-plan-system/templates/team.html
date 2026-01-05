@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>部门周计划（管理员）</h1>
+
+  <div class="card">
+    <div class="muted">ISO周：{{ period.start_date }} ~ {{ period.end_date }}（W{{ period.week_no }}）</div>
+    <div class="muted">
+      工作日：
+      {% if workday_count and workday_count > 0 %}
+        {{ workday_start }} ~ {{ workday_end }}（{{ workday_count }} 天）
+      {% else %}
+        -
+      {% endif %}
+    </div>
+    <div class="actions">
+      <form method="get" action="/team" class="inline" data-auto-submit>
+        <input class="date-input" name="d" type="date" value="{{ selected_date_str }}" onchange="this.form.submit()" />
+      </form>
+      <a class="btn" href="/team?d={{ prev_week_date_str }}">上周</a>
+      <a class="btn" href="/team?d={{ today_str }}">本周</a>
+      <a class="btn" href="/team?d={{ next_week_date_str }}">下周</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cards">
+      {% for c in team_cards %}
+        {% set t = c.team %}
+        <div class="week-card">
+          <h3>{{ t.name }}</h3>
+          <div class="week-meta">
+            <div class="muted">成员：{{ c.user_cnt }}</div>
+            <div class="muted">
+              已登记：
+              {% if c.user_cnt > 0 and c.registered_cnt == c.user_cnt %}
+                <span class="status-badge status-ok">{{ c.registered_cnt }}/{{ c.user_cnt }}</span>
+              {% else %}
+                <span class="status-badge status-bad">{{ c.registered_cnt }}/{{ c.user_cnt }}</span>
+              {% endif %}
+              {% if c.missing_cnt and c.missing_cnt > 0 %}
+                <span class="muted">（未创建：{{ c.missing_cnt }}）</span>
+              {% endif %}
+            </div>
+            <div class="muted">预计工时：{{ "%.1f"|format(c.estimated_sum) }}h | 实际工时：{{ "%.1f"|format(c.actual_sum) }}h</div>
+            <div class="muted">更新时间：{{ c.last_updated.strftime("%Y-%m-%d %H:%M") if c.last_updated else "-" }}</div>
+          </div>
+          <div class="week-actions">
+            <a class="btn primary" href="/team/{{ t.id }}?period_id={{ period.id }}">详情</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
